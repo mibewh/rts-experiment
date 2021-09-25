@@ -7,14 +7,18 @@ using UnityEngine.InputSystem;
 
 public class CameraController : MonoBehaviour
 {
-    public float panSpeed;
+    public float panSpeed = 1f;
     public float panSmoothTime = 0.1f;
+
+    public float rotationSpeed = 1f;
     
     private Vector3 pan = Vector3.zero;
     private Vector3 targetPan = Vector3.zero;
     private Vector3 panSmoothV;
 
-    private Vector3 rot = Vector3.zero;
+    private bool rotating = false;
+    private float pitch;
+    private float yaw;
 
     private Camera camera;
 
@@ -29,9 +33,24 @@ public class CameraController : MonoBehaviour
     void FixedUpdate()
     {
         pan = Vector3.SmoothDamp(pan, targetPan, ref panSmoothV, panSmoothTime);
-
+        
         transform.Translate(pan);
-        // transform.Rotate(rot);
+
+        if (rotating)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+
+            Vector3 rotation = Time.deltaTime * rotationSpeed * pitch * Vector3.right +
+                               Time.deltaTime * rotationSpeed * yaw * Vector3.up;
+            transform.Rotate(rotation);
+            // transform.Rotate(rot, Space.Self);
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
     void OnMove(InputValue value)
@@ -44,8 +63,11 @@ public class CameraController : MonoBehaviour
     void OnLook(InputValue value)
     {
         Vector2 lookInput = value.Get<Vector2>();
-        rot.x = -lookInput.y;
-        rot.y = lookInput.x;
+        pitch = -lookInput.y;
+        yaw = lookInput.x;
+        // targetRot = Quaternion.AngleAxis(targetPitch, Vector3.up) * Quaternion.AngleAxis(targetYaw, Vector3.right);
+        // rot.x = -lookInput.y;
+        // rot.y = lookInput.x;
     }
 
     void OnFire(InputValue value)
@@ -59,6 +81,19 @@ public class CameraController : MonoBehaviour
                 var dogKnight = GameObject.Find("DogPBR").GetComponent<DogKnight>();
                 dogKnight.SetTarget(worldClick);
             }
+        }
+    }
+
+    void OnRotate(InputValue value)
+    {
+        Debug.Log(value.isPressed);
+        if (value.isPressed)
+        {
+            rotating = true;
+        }
+        else
+        {
+            rotating = false;
         }
     }
 
