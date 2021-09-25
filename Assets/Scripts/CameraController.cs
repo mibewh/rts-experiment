@@ -9,8 +9,8 @@ public class CameraController : MonoBehaviour
 {
     public float panSpeed = 1f;
     public float panSmoothTime = 0.1f;
-
-    public float rotationSpeed = 1f;
+    public float rotationSpeed = 10f;
+    public float spinSpeed = 20f;
     
     private Vector3 pan = Vector3.zero;
     private Vector3 targetPan = Vector3.zero;
@@ -19,8 +19,10 @@ public class CameraController : MonoBehaviour
     private bool rotating = false;
     private float pitch;
     private float yaw;
+    private float spin;
 
     private Camera camera;
+    private Unit selected = null;
 
     
     // Start is called before the first frame update
@@ -36,14 +38,16 @@ public class CameraController : MonoBehaviour
         
         transform.Translate(pan);
 
+        // always apply spin
+        Vector3 rotation = Time.deltaTime * spinSpeed * spin * Vector3.forward;
+        
         if (rotating)
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
-            Vector3 rotation = Time.deltaTime * rotationSpeed * pitch * Vector3.right +
-                               Time.deltaTime * rotationSpeed * yaw * Vector3.up;
-            transform.Rotate(rotation);
+            rotation += Time.deltaTime * rotationSpeed * pitch * Vector3.right +
+                        Time.deltaTime * rotationSpeed * yaw * Vector3.up;
             // transform.Rotate(rot, Space.Self);
         }
         else
@@ -51,6 +55,8 @@ public class CameraController : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
+        transform.Rotate(rotation);
+
     }
 
     void OnMove(InputValue value)
@@ -70,16 +76,37 @@ public class CameraController : MonoBehaviour
         // rot.y = lookInput.x;
     }
 
-    void OnFire(InputValue value)
+    void OnInteract(InputValue value)
     {
         if (value.isPressed)
         {
-            Vector3? tryWorldClick = GetWorldClick();
+            Vector3? tryWorldClick = GetTerrainClick();
             if (tryWorldClick is Vector3 worldClick)
             {
                 Debug.Log("World Click: " + worldClick);
-                var dogKnight = GameObject.Find("DogPBR").GetComponent<DogKnight>();
-                dogKnight.SetTarget(worldClick);
+                if (selected)
+                {
+                    selected.SetTarget(worldClick);
+                }
+            }
+        }
+    }
+
+    void OnSelect(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            if (selected)
+            {
+                selected.Deselect();
+                selected = null;
+            }
+            
+            Unit unit = GetUnitClick();
+            if (unit)
+            {
+                unit.Select();
+                selected = unit;
             }
         }
     }
@@ -97,8 +124,13 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    void OnSpin(InputValue value)
+    {
+        spin = value.Get<float>();
+    }
 
-    Vector3? GetWorldClick()
+
+    Vector3? GetTerrainClick()
     {
         // This will current only work for mouse. Replace with more generic "cursor" data for virtual cursor
         // set an event system here in the future, could activate an attack sequence
@@ -110,6 +142,18 @@ public class CameraController : MonoBehaviour
         }
         
         return null;
+    }
+
+    Unit GetUnitClick()
+    {
+        Ray ray = camera.ScreenPointToRay(Mouse.current.position.ReadValue());
+        Unit unit = null;
+        if(Physics.Raycast(ray, out RaycastHit hit, 1000f, LayerMask.GetMask("Unit")))
+        {
+            unit = hit.transform.GetComponentInParent<Unit>();
+        }
+
+        return unit;
     }
     
     
