@@ -76,40 +76,24 @@ public class CameraController : MonoBehaviour
         // rot.y = lookInput.x;
     }
 
-    void OnInteract(InputValue value)
-    {
-        if (value.isPressed)
-        {
-            Vector3? tryWorldClick = GetTerrainClick();
-            if (tryWorldClick is Vector3 worldClick)
-            {
-                Debug.Log("World Click: " + worldClick);
-                if (selected)
-                {
-                    selected.SetTarget(worldClick);
-                }
-            }
-        }
-    }
-
-    void OnSelect(InputValue value)
-    {
-        if (value.isPressed)
-        {
-            if (selected)
-            {
-                // selected.Deselect();
-                selected = null;
-            }
-            
-            Unit unit = GetUnitClick();
-            if (unit)
-            {
-                // unit.Select();
-                selected = unit;
-            }
-        }
-    }
+    // void OnSelect(InputValue value)
+    // {
+    //     if (value.isPressed)
+    //     {
+    //         if (selected)
+    //         {
+    //             // selected.Deselect();
+    //             selected = null;
+    //         }
+    //         
+    //         Unit unit = GetUnitClick();
+    //         if (unit)
+    //         {
+    //             // unit.Select();
+    //             selected = unit;
+    //         }
+    //     }
+    // }
 
     void OnRotate(InputValue value)
     {
@@ -130,31 +114,4 @@ public class CameraController : MonoBehaviour
     }
 
 
-    Vector3? GetTerrainClick()
-    {
-        // This will current only work for mouse. Replace with more generic "cursor" data for virtual cursor
-        // set an event system here in the future, could activate an attack sequence
-
-        Ray ray = camera.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if(Physics.Raycast(ray, out RaycastHit hit, 1000f, LayerMask.GetMask("Terrain")))
-        {
-            return hit.point;
-        }
-        
-        return null;
-    }
-
-    Unit GetUnitClick()
-    {
-        Ray ray = camera.ScreenPointToRay(Mouse.current.position.ReadValue());
-        Unit unit = null;
-        if(Physics.Raycast(ray, out RaycastHit hit, 1000f, LayerMask.GetMask("Unit")))
-        {
-            unit = hit.transform.GetComponentInParent<Unit>();
-        }
-
-        return unit;
-    }
-    
-    
 }
