@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.InputSystem;
 
 public class Selection : MonoBehaviour
@@ -74,10 +75,26 @@ public class Selection : MonoBehaviour
             if (tryWorldClick is Vector3 worldClick)
             {
                 Debug.Log("World Click: " + worldClick);
-                
+
                 if (selected.Count > 0)
                 {
-                    selected.ForEach(unit => unit.SetTarget(worldClick));
+                    // Get the right normal of the direction to the destination
+                    var center = GetSelectedCenter();
+                    var dir = (worldClick - center).normalized;
+                    var right = Quaternion.Euler(0, 90, 0) * dir;
+
+                    for (int i = 0; i < selected.Count; i++)
+                    {
+                        var unit = selected[i];
+                        Vector3 target = worldClick + (right * i * 5);
+                        target = GetNavMeshPoint(target);
+                        
+                        // convert target to navmsesh point
+                        Debug.Log("Target: " + target);
+                        unit.SetTarget(target);
+                    }
+                    
+                    // selected.ForEach(unit => unit.SetTarget(worldClick));
                 }
             }
         }
@@ -118,6 +135,28 @@ public class Selection : MonoBehaviour
             RectangleUtil.DrawScreenRect( rect, new Color( 0.8f, 0.8f, 0.95f, 0.25f ) );
             RectangleUtil.DrawScreenRectBorder( rect, 2, new Color( 0.8f, 0.8f, 0.95f ) );
         }
+    }
+
+    private Vector3 GetSelectedCenter()
+    {
+        var total = Vector3.zero;
+        foreach (var sel in selected)
+        {
+            total += sel.transform.position;
+        }
+
+        return total / selected.Count;
+    }
+
+    private Vector3 GetNavMeshPoint(Vector3 point)
+    {
+        Vector3 target = point;
+        if (NavMesh.SamplePosition(point, out NavMeshHit hit, 4.0f, NavMesh.AllAreas))
+        {
+            target = hit.position;
+        }
+
+        return target;
     }
 
     public List<Unit> GetSelected()
