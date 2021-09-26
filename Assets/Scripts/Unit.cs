@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.AI;
 using Vector3 = UnityEngine.Vector3;
@@ -12,7 +13,12 @@ public class Unit : MonoBehaviour
 
     
     public float speed = 1;
-    
+
+    // private void Awake()
+    // {
+    //     throw new NotImplementedException();
+    // }
+
     // Start is called before the first frame update
     void Start()
     {

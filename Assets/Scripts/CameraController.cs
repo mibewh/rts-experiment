@@ -98,14 +98,14 @@ public class CameraController : MonoBehaviour
         {
             if (selected)
             {
-                selected.Deselect();
+                // selected.Deselect();
                 selected = null;
             }
             
             Unit unit = GetUnitClick();
             if (unit)
             {
-                unit.Select();
+                // unit.Select();
                 selected = unit;
             }
         }
