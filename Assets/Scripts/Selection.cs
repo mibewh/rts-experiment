@@ -71,30 +71,24 @@ public class Selection : MonoBehaviour
     {
         if (value.isPressed)
         {
-            Vector3? tryWorldClick = GetTerrainClick();
-            if (tryWorldClick is Vector3 worldClick)
+            // check if attack
+            Unit targetUnit = GetUnitClick();
+            if (targetUnit)
             {
-                Debug.Log("World Click: " + worldClick);
-
-                if (selected.Count > 0)
+                selected.ForEach(delegate(Unit unit)
                 {
-                    // Get the right normal of the direction to the destination
-                    var center = GetSelectedCenter();
-                    var dir = (worldClick - center).normalized;
-                    var right = Quaternion.Euler(0, 90, 0) * dir;
+                    unit.AttackTarget(targetUnit);
+                });
+            }
+            else
+            {
+                // Move units to point
+                Vector3? tryWorldClick = GetTerrainClick();
+                if (tryWorldClick is Vector3 worldClick)
+                {
+                    Debug.Log("World Click: " + worldClick);
 
-                    for (int i = 0; i < selected.Count; i++)
-                    {
-                        var unit = selected[i];
-                        Vector3 target = worldClick + (right * i * 5);
-                        target = GetNavMeshPoint(target);
-                        
-                        // convert target to navmsesh point
-                        Debug.Log("Target: " + target);
-                        unit.SetTarget(target);
-                    }
-                    
-                    // selected.ForEach(unit => unit.SetTarget(worldClick));
+                    FormUnitsAround(selected, worldClick);
                 }
             }
         }
@@ -162,5 +156,60 @@ public class Selection : MonoBehaviour
     public List<Unit> GetSelected()
     {
         return selected;
+    }
+
+    private void FormUnitsAround(List<Unit> units, Vector3 target)
+    {
+        if (units.Count > 0)
+        {
+            // Get the right normal of the direction to the destination
+            var center = GetSelectedCenter();
+            var dir = (target - center).normalized;
+            // var right = Quaternion.Euler(0, 90, 0) * dir;
+            List<Vector3> pointsAround = GetPointsAround(target, dir, units.Count, (units.Count - 1) * Mathf.Sqrt(units.Count));
+
+            selected.Sort(delegate(Unit unit1, Unit unit2)
+            {
+                return Vector3.Distance(unit2.transform.position, target)
+                    .CompareTo(Vector3.Distance(unit1.transform.position, target));
+            });
+                    
+                    
+            for (int i = 0; i < units.Count; i++)
+            {
+                var unit = units[i];
+                // Vector3 target = worldClick + (right * i * 5);
+                Vector3 radialTarget = pointsAround[i];
+                radialTarget = GetNavMeshPoint(radialTarget);
+                        
+                // convert target to navmsesh point
+                Debug.Log("Agent Target: " + radialTarget);
+                unit.SetTarget(radialTarget);
+            }
+                    
+            // units.ForEach(unit => unit.SetTarget(worldClick));
+        }
+    }
+
+
+    // Generates num points in a circle of radius rad around a center
+    private List<Vector3> GetPointsAround(Vector3 center, Vector3 forward, int num, float rad)
+    {
+        List<Vector3> results = new List<Vector3>();
+        int offset = 90;
+        for (int i = 0; i < num; i++)
+        {
+            Vector3 delta = Quaternion.AngleAxis((360 / num * i) + offset, Vector3.up) * forward.normalized * rad;
+            results.Add(center + delta);
+        }
+
+        Vector3 back = results[0];
+        
+        results.Sort(delegate(Vector3 vector1, Vector3 vector2)
+        {
+            return Vector3.Distance(vector1, back).CompareTo(Vector3.Distance(vector2, back));
+        });
+
+        return results;
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 using Vector3 = UnityEngine.Vector3;
@@ -7,8 +8,6 @@ public class Unit : MonoBehaviour
 {
     private Animator animator;
     private NavMeshAgent agent;
-    private bool walking = false;
-    private bool running = false;
     private bool selected = false;
 
     
@@ -26,30 +25,31 @@ public class Unit : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         
         animator.SetBool("run", false);
-        running = false;
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        // Move toward target
-        var move = Vector3.zero;
-        if (agent.remainingDistance < 0.5f)
-        {
-            move = agent.desiredVelocity;
-        }
-        
-        // Gravity
-        // move.y -= 9.81f; 
-        agent.Move(move * Time.deltaTime);
-        
         CheckAnimationState(agent.velocity);
     }
 
     public void SetTarget(Vector3 pos)
     {
         agent.SetDestination(pos);
+    }
+
+    public void AttackTarget(Unit target)
+    {
+        SetTarget(target.transform.position);
+        StartCoroutine(AttackCoroutine(target));
+    }
+
+    private IEnumerator AttackCoroutine(Unit target)
+    {
+        yield return new WaitUntil(() => Vector3.Distance(transform.position, target.transform.position) < 4);
+        SetTarget(transform.position); // stay still
+        animator.SetBool("attacking", true);
     }
     
     public void Select()
