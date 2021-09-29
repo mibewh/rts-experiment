@@ -11,10 +11,14 @@ public class Unit : MonoBehaviour
     private Projector projector;
     private bool selected = false;
     private bool attacking = false;
+    private bool dead = false;
     private Unit targetUnit = null;
+    private int currentHp = 1;
 
     
     public float speed = 1;
+    public int maxHp = 100;
+    public int damage = 20;
     public Material selectedCircle;
     public Material attackCircle;
 
@@ -29,6 +33,8 @@ public class Unit : MonoBehaviour
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
         projector = GetComponentInChildren<Projector>();
+
+        currentHp = maxHp; // start with max health
     }
 
     // Update is called once per frame
@@ -62,6 +68,7 @@ public class Unit : MonoBehaviour
     public void MoveToward(Vector3 pos)
     {
         attacking = false;
+        StopCoroutine("AttackCoroutine");
         SetTarget(pos);
     }
 
@@ -90,11 +97,27 @@ public class Unit : MonoBehaviour
         attacking = true;
         yield return new WaitUntil(() => Vector3.Distance(transform.position, target.transform.position) < 2);
         SetTarget(transform.position); // stay still
+        yield return new WaitUntil(() =>
+        {
+            bool stopAttacking = target.IsDead();
+            return stopAttacking;
+        });
+
+        Idle();
     }
 
     public void AttackHit()
     {
-        Debug.Log("Attack hit");
+        // Debug.Log("Attack hit");
+        if (targetUnit != null)
+        {
+            targetUnit.Damage(damage, this);
+            if (targetUnit.IsDead())
+            {
+                targetUnit = null;
+                Idle();
+            }
+        }
     }
     
     public void Select()
@@ -117,10 +140,17 @@ public class Unit : MonoBehaviour
         }
     }
 
+    public void Idle()
+    {
+        MoveToward(transform.position);
+        StopCoroutine("AttackCoroutine");
+    }
+
     private void CheckAnimationState(Vector3 velocity)
     {
         animator.SetFloat("moveSpeed", velocity.magnitude);
         animator.SetBool("attacking", attacking);
+        animator.SetBool("dead", dead);
     }
 
     public IEnumerator FlashAttackCircle(float times, float rate)
@@ -136,5 +166,32 @@ public class Unit : MonoBehaviour
                 yield return new WaitForSeconds(1 / rate);
             }
         }
+    }
+
+    public void Damage(int dmg, Unit damager = null)
+    {
+        currentHp -= dmg;
+        if (currentHp <= 0)
+        {
+            Idle();
+            dead = true;
+        }
+
+        if (targetUnit == null && damager)
+        {
+            AttackTarget(damager);
+        }
+    }
+
+    public bool IsDead()
+    {
+        return dead;
+    }
+
+    // Called on death animation complete
+    public void Die(float delay)
+    {
+        animator.speed = 0;
+        Destroy(this.gameObject, delay);
     }
 }
