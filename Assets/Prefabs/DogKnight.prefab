@@ -1213,6 +1213,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 6
+  selectedCircle: {fileID: 2100000, guid: a6ad247aa4c6933408f9c37f936e9de3, type: 2}
+  attackCircle: {fileID: 2100000, guid: b5d138f7425efdf4cb784019dc5ca2f8, type: 2}
 --- !u!195 &3484508718425887381
 NavMeshAgent:
   m_ObjectHideFlags: 0

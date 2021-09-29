@@ -184,7 +184,7 @@ public class Selection : MonoBehaviour
                         
                 // convert target to navmsesh point
                 Debug.Log("Agent Target: " + radialTarget);
-                unit.SetTarget(radialTarget);
+                unit.MoveToward(radialTarget);
             }
                     
             // units.ForEach(unit => unit.SetTarget(worldClick));
