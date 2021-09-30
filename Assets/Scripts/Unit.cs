@@ -14,6 +14,7 @@ public class Unit : MonoBehaviour
     private bool dead = false;
     private Unit targetUnit = null;
     private int currentHp = 1;
+    private bool idle;
 
     
     public float speed = 1;
@@ -46,18 +47,27 @@ public class Unit : MonoBehaviour
     // TODO Proper rotation management in case unit not facing target
     void FixedUpdate()
     {
+        Vector3 dir = transform.forward;
+        agent.updateRotation = false;
         // Face the target
-        // if (targetUnit)
-        // {
-        //     agent.updateRotation = false;
-        //     var dir = targetUnit.transform.position - transform.position;
-        //     var targetRotation = Quaternion.FromToRotation(transform.forward.normalized, dir.normalized);
-        //     transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, agent.angularSpeed);
-        // }
-        // else
-        // {
-        //     agent.updateRotation = true;
-        // }
+        if (targetUnit && !targetUnit.IsDead())
+        {
+            dir = targetUnit.transform.position - transform.position;
+            
+        }
+        else
+        {
+            dir = agent.steeringTarget - transform.position;
+        }
+
+        bool shouldRotate = !idle;
+        shouldRotate &= dir.magnitude > 0.25f;
+        
+        if (shouldRotate)
+        {
+            var targetRotation = Quaternion.LookRotation(dir.normalized);
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, agent.angularSpeed * Time.fixedDeltaTime);
+        }
     }
 
     private void SetTarget(Vector3 pos)
@@ -67,36 +77,43 @@ public class Unit : MonoBehaviour
 
     public void MoveToward(Vector3 pos)
     {
-        attacking = false;
-        StopCoroutine("AttackCoroutine");
-        SetTarget(pos);
+        Idle();
+        idle = false;
+        if (!pos.Equals(transform.position))
+        {
+            SetTarget(pos);
+        }
     }
 
     public void AttackTarget(Unit target)
     {
-        bool shouldTarget = true;
-        
-        // Meets criteria to flash indicator
-        StartCoroutine(target.FlashAttackCircle(2, 8));
-
-        // Reset target if it is a new order
-        shouldTarget = targetUnit == null;
-        shouldTarget = shouldTarget || target.GetInstanceID() != targetUnit.GetInstanceID();
-
-        if (shouldTarget)
+        if (CanAttack(target))
         {
-            MoveToward(target.transform.position);
-            StartCoroutine(AttackCoroutine(target));
-            targetUnit = target;
+            bool shouldTarget = true;
+            
+            // Meets criteria to flash indicator
+            StartCoroutine(target.FlashAttackCircle(2, 8));
+
+            // Reset target if it is a new order
+            shouldTarget = targetUnit == null;
+            shouldTarget = shouldTarget || target.GetInstanceID() != targetUnit.GetInstanceID();
+
+            if (shouldTarget)
+            {
+                MoveToward(target.transform.position);
+                StartCoroutine(AttackCoroutine(target));
+                targetUnit = target;
+            }
         }
     }
 
     private IEnumerator AttackCoroutine(Unit target)
     {
         yield return new WaitUntil(() => Vector3.Distance(transform.position, target.transform.position) < 3);
+        idle = false;
         attacking = true;
         yield return new WaitUntil(() => Vector3.Distance(transform.position, target.transform.position) < 2);
-        SetTarget(transform.position); // stay still
+        SetTarget(transform.position); // stay still, but don't idle because that would cancel attack routine
         yield return new WaitUntil(() =>
         {
             bool stopAttacking = target.IsDead();
@@ -118,6 +135,11 @@ public class Unit : MonoBehaviour
                 Idle();
             }
         }
+    }
+
+    public bool CanAttack(Unit other)
+    {
+        return !Equals(other);
     }
     
     public void Select()
@@ -142,8 +164,9 @@ public class Unit : MonoBehaviour
 
     public void Idle()
     {
-        MoveToward(transform.position);
+        attacking = false;
         StopCoroutine("AttackCoroutine");
+        agent.ResetPath();
     }
 
     private void CheckAnimationState(Vector3 velocity)

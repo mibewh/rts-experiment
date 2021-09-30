@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
@@ -36,7 +37,10 @@ public class Selection : MonoBehaviour
 
             foreach (Unit unit in selected)
             {
-                unit.Deselect();
+                if (unit != null && !unit.IsDestroyed())
+                {
+                    unit.Deselect();
+                }
             }
             
             // Pls optimize me i am just a code
@@ -205,7 +209,7 @@ public class Selection : MonoBehaviour
 
         Vector3 back = results[0];
         
-        results.Sort(delegate(Vector3 vector1, Vector3 vector2)
+        results.Sort((Vector3 vector1, Vector3 vector2) =>
         {
             return Vector3.Distance(vector1, back).CompareTo(Vector3.Distance(vector2, back));
         });

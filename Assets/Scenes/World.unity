@@ -406,6 +406,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DogKnight (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 4953772674105246793, guid: b46e4cad399124d47a8421248d483d93, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b46e4cad399124d47a8421248d483d93, type: 3}
 --- !u!1 &963194225
@@ -895,6 +899,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DogKnight (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4953772674105246793, guid: b46e4cad399124d47a8421248d483d93, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b46e4cad399124d47a8421248d483d93, type: 3}
 --- !u!114 &1183204250
@@ -965,6 +973,10 @@ PrefabInstance:
     - target: {fileID: 4953772674105246793, guid: b46e4cad399124d47a8421248d483d93, type: 3}
       propertyPath: m_Name
       value: DogKnight (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4953772674105246793, guid: b46e4cad399124d47a8421248d483d93, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b46e4cad399124d47a8421248d483d93, type: 3}
@@ -1084,6 +1096,10 @@ PrefabInstance:
     - target: {fileID: 3484508718425887381, guid: b46e4cad399124d47a8421248d483d93, type: 3}
       propertyPath: m_Speed
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3484508718425887381, guid: b46e4cad399124d47a8421248d483d93, type: 3}
+      propertyPath: m_AngularSpeed
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 3484508718425887381, guid: b46e4cad399124d47a8421248d483d93, type: 3}
       propertyPath: m_StoppingDistance
