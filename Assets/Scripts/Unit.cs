@@ -4,12 +4,10 @@ using UnityEngine;
 using UnityEngine.AI;
 using Vector3 = UnityEngine.Vector3;
 
-public class Unit : MonoBehaviour
+public class Unit : Selectable
 {
     private Animator animator;
     private NavMeshAgent agent;
-    private Projector projector;
-    private bool selected = false;
     private bool attacking = false;
     private bool dead = false;
     private Unit targetUnit = null;
@@ -20,8 +18,7 @@ public class Unit : MonoBehaviour
     public float speed = 1;
     public int maxHp = 100;
     public int damage = 20;
-    public Material selectedCircle;
-    public Material attackCircle;
+    
 
     // private void Awake()
     // {
@@ -29,11 +26,12 @@ public class Unit : MonoBehaviour
     // }
 
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
+        base.Start();
+        
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
-        projector = GetComponentInChildren<Projector>();
 
         currentHp = maxHp; // start with max health
     }
@@ -140,26 +138,6 @@ public class Unit : MonoBehaviour
     public bool CanAttack(Unit other)
     {
         return !Equals(other);
-    }
-    
-    public void Select()
-    {
-        selected = true;
-        if (projector != null)
-        {
-            projector.material = selectedCircle;
-            projector.enabled = true;
-        }
-    }
-    
-    public void Deselect()
-    {
-        selected = false;
-        Projector projector = GetComponentInChildren<Projector>();
-        if (projector != null)
-        {
-            projector.enabled = false;
-        }
     }
 
     public void Idle()

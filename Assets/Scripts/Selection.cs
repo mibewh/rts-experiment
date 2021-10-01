@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -13,11 +14,11 @@ public class Selection : MonoBehaviour
     bool isSelecting = false;
     Vector3 mousePosition1;
 
-    private List<Unit> selected;
+    private List<Selectable> selected;
 
     private void Awake()
     {
-        selected = new List<Unit>();
+        selected = new List<Selectable>();
     }
 
     void OnSelect(InputValue inputValue)
@@ -35,17 +36,18 @@ public class Selection : MonoBehaviour
             Vector3 mousePosition2 = Mouse.current.position.ReadValue();
             Bounds bounds = RectangleUtil.GetViewportBounds(camera, mousePosition1, mousePosition2);
 
-            foreach (Unit unit in selected)
+            foreach (Selectable selectable in selected)
             {
-                if (unit != null && !unit.IsDestroyed())
+                if (selectable != null && !selectable.IsDestroyed())
                 {
-                    unit.Deselect();
+                    selectable.Deselect();
                 }
             }
-            
+
+            selected.Clear();
+
             // Pls optimize me i am just a code
             Unit[] allUnits = GameObject.FindObjectsOfType<Unit>();
-            selected.Clear();
             foreach (Unit unit in allUnits)
             {
                 if (bounds.Contains(camera.WorldToViewportPoint(unit.transform.position)))
@@ -54,19 +56,26 @@ public class Selection : MonoBehaviour
                 }
             }
 
+            // Next see if there were buildings
+            if (selected.Count == 0)
+            {
+                Building[] allBuildings = GameObject.FindObjectsOfType<Building>();
+                
+            }
+
             // Fallback to raycast
             if (selected.Count == 0)
             {
-                Unit unit = GetUnitClick();
-                if (unit)
+                Selectable selectable = GetSelectableClick();
+                if (selectable)
                 {
-                    selected.Add(unit);
+                    selected.Add(selectable);
                 }
             }
 
-            foreach (Unit unit in selected)
+            foreach (Selectable selectable in selected)
             {
-                unit.Select();
+                selectable.Select();
             }
         }
     }
@@ -75,25 +84,43 @@ public class Selection : MonoBehaviour
     {
         if (value.isPressed)
         {
-            // check if attack
-            Unit targetUnit = GetUnitClick();
-            if (targetUnit)
+            List<Unit> selectedUnits = GetSelectedUnits();
+            if (selectedUnits.Count > 0)
             {
-                selected.ForEach(delegate(Unit unit)
+                // check if attack
+                Selectable targetSelect = GetSelectableClick();
+                if (targetSelect is Unit)
                 {
-                    unit.AttackTarget(targetUnit);
-                });
-            }
-            else
-            {
-                // Move units to point
-                Vector3? tryWorldClick = GetTerrainClick();
-                if (tryWorldClick is Vector3 worldClick)
-                {
-                    Debug.Log("World Click: " + worldClick);
-
-                    FormUnitsAround(selected, worldClick);
+                    selectedUnits.ForEach(delegate(Unit unit)
+                    {
+                        unit.AttackTarget((Unit) targetSelect);
+                    });
                 }
+                else
+                {
+                    // Move units to point
+                    Vector3? tryWorldClick = GetTerrainClick();
+                    if (tryWorldClick is Vector3 worldClick)
+                    {
+                        Debug.Log("World Click: " + worldClick);
+
+                        FormUnitsAround(selectedUnits, worldClick);
+                    }
+                }
+            }
+        }
+    }
+
+    void OnSpawn(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            List<Building> buildings = GetSelectedBuildings();
+            if (buildings.Count > 0)
+            {
+                buildings.ForEach(building => {
+                    building.SpawnUnit();
+                });
             }
         }
     }
@@ -112,16 +139,16 @@ public class Selection : MonoBehaviour
         return null;
     }
     
-    Unit GetUnitClick()
+    Selectable GetSelectableClick()
     {
         Ray ray = camera.ScreenPointToRay(Mouse.current.position.ReadValue());
-        Unit unit = null;
-        if(Physics.Raycast(ray, out RaycastHit hit, 1000f, LayerMask.GetMask("Unit")))
+        Selectable selectable = null;
+        if(Physics.Raycast(ray, out RaycastHit hit, 1000f, LayerMask.GetMask("Unit", "Building")))
         {
-            unit = hit.transform.GetComponentInParent<Unit>();
+            selectable = hit.transform.GetComponentInParent<Selectable>();
         }
 
-        return unit;
+        return selectable;
     }
  
     void OnGUI()
@@ -157,9 +184,19 @@ public class Selection : MonoBehaviour
         return target;
     }
 
-    public List<Unit> GetSelected()
+    public List<Selectable> GetSelected()
     {
         return selected;
+    }
+
+    public List<Unit> GetSelectedUnits()
+    {
+        return GetSelected().OfType<Unit>().ToList();
+    }
+    
+    public List<Building> GetSelectedBuildings()
+    {
+        return GetSelected().OfType<Building>().ToList();
     }
 
     private void FormUnitsAround(List<Unit> units, Vector3 target)
@@ -172,7 +209,7 @@ public class Selection : MonoBehaviour
             // var right = Quaternion.Euler(0, 90, 0) * dir;
             List<Vector3> pointsAround = GetPointsAround(target, dir, units.Count, (units.Count - 1) * Mathf.Sqrt(units.Count));
 
-            selected.Sort(delegate(Unit unit1, Unit unit2)
+            units.Sort(delegate(Unit unit1, Unit unit2)
             {
                 return Vector3.Distance(unit2.transform.position, target)
                     .CompareTo(Vector3.Distance(unit1.transform.position, target));

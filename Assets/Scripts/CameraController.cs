@@ -97,7 +97,6 @@ public class CameraController : MonoBehaviour
 
     void OnRotate(InputValue value)
     {
-        Debug.Log(value.isPressed);
         if (value.isPressed)
         {
             rotating = true;

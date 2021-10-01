@@ -52,6 +52,14 @@
                     "expectedControlType": "Axis",
                     "processors": "",
                     "interactions": ""
+                },
+                {
+                    "name": "Spawn",
+                    "type": "Button",
+                    "id": "65be5ecf-a4a4-4a67-86d3-119f23d0866c",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
                 }
             ],
             "bindings": [
@@ -327,6 +335,17 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "834078af-2d2a-4a59-b6c1-6f22bcebb5aa",
+                    "path": "<Keyboard>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Spawn",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
