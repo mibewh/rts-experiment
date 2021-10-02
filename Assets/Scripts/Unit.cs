@@ -26,7 +26,7 @@ public class Unit : Selectable
     // }
 
     // Start is called before the first frame update
-    protected override void Start()
+    protected void Awake()
     {
         base.Start();
         

@@ -423,6 +423,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2739720998991737292, guid: 91c9ab61f858c164f92d3d391a02b147, type: 3}
+      propertyPath: spawnDistance
+      value: 12.5
+      objectReference: {fileID: 0}
     - target: {fileID: 3660685401664758563, guid: 91c9ab61f858c164f92d3d391a02b147, type: 3}
       propertyPath: m_Name
       value: barracks
