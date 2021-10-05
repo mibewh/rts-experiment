@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
 
-public class Selection : MonoBehaviour
+public class EntitySelection : MonoBehaviour
 {
     public Camera camera;
     
