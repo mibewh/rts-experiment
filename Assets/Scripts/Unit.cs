@@ -13,11 +13,15 @@ public class Unit : Selectable
     private Unit targetUnit = null;
     private int currentHp = 1;
     private bool idle;
+    private bool onAttackCooldown = false;
 
     
     public float speed = 1;
     public int maxHp = 100;
     public int damage = 20;
+    public float minAttackDistance = 3;
+    public float attackTargetDistance = 2;
+    public float attackCooldown = 1;
     
 
     // private void Awake()
@@ -66,6 +70,27 @@ public class Unit : Selectable
             var targetRotation = Quaternion.LookRotation(dir.normalized);
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, agent.angularSpeed * Time.fixedDeltaTime);
         }
+
+        bool haveTarget = UpdateTargetUnit();
+        
+        // Check if need to start a new attack
+        if (!onAttackCooldown && !attacking && haveTarget)
+        {
+            StartCoroutine(AttackCoroutine(targetUnit));
+        }
+    }
+
+    private bool UpdateTargetUnit()
+    {
+        if (targetUnit)
+        {
+            if (targetUnit.IsDead())
+            {
+                targetUnit = null;
+            }
+        }
+
+        return targetUnit != null;
     }
 
     private void SetTarget(Vector3 pos)
@@ -107,23 +132,24 @@ public class Unit : Selectable
 
     private IEnumerator AttackCoroutine(Unit target)
     {
-        yield return new WaitUntil(() => Vector3.Distance(transform.position, target.transform.position) < 3);
+        yield return new WaitUntil(() => Vector3.Distance(transform.position, target.transform.position) < minAttackDistance);
         idle = false;
         attacking = true;
-        yield return new WaitUntil(() => Vector3.Distance(transform.position, target.transform.position) < 2);
+        yield return new WaitUntil(() => Vector3.Distance(transform.position, target.transform.position) < attackTargetDistance);
         SetTarget(transform.position); // stay still, but don't idle because that would cancel attack routine
-        yield return new WaitUntil(() =>
-        {
-            bool stopAttacking = target.IsDead();
-            return stopAttacking;
-        });
-
-        Idle();
+        
+        // yield return new WaitUntil(() =>
+        // {
+        //     bool stopAttacking = target.IsDead();
+        //     return stopAttacking;
+        // });
+        //
+        // Idle();
     }
 
     public void AttackHit()
     {
-        // Debug.Log("Attack hit");
+        Debug.Log("Attack hit");
         if (targetUnit != null)
         {
             targetUnit.Damage(damage, this);
@@ -133,6 +159,13 @@ public class Unit : Selectable
                 Idle();
             }
         }
+
+        attacking = false;
+        onAttackCooldown = true;
+        StartCoroutine(DelayUtil.WaitAndDo(attackCooldown, () =>
+        {
+            onAttackCooldown = false;
+        }));
     }
 
     public bool CanAttack(Unit other)
