@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -11,10 +12,18 @@ public class CameraController : MonoBehaviour
     public float panSmoothTime = 0.1f;
     public float rotationSpeed = 10f;
     public float spinSpeed = 20f;
+    public float zoomSpeed = 1f;
+    public float zoomScale = 1f;
+    public float zoomSmoothTime = 0.5f;
     
     private Vector3 pan = Vector3.zero;
     private Vector3 targetPan = Vector3.zero;
     private Vector3 panSmoothV;
+
+    private float zoom = 0;
+    private float targetZoom = 0;
+    private float zoomSmoothV;
+    
 
     private bool rotating = false;
     private float pitch;
@@ -23,6 +32,7 @@ public class CameraController : MonoBehaviour
 
     private Camera camera;
     private Unit selected = null;
+    
 
     
     // Start is called before the first frame update
@@ -34,9 +44,9 @@ public class CameraController : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        pan = Vector3.SmoothDamp(pan, targetPan, ref panSmoothV, panSmoothTime);
+        pan = panSpeed * Vector3.SmoothDamp(pan, targetPan, ref panSmoothV, panSmoothTime);
         
-        transform.Translate(pan);
+        transform.Translate(pan, Space.World);
 
         // always apply spin
         Vector3 rotation = Time.deltaTime * spinSpeed * spin * Vector3.forward;
@@ -57,6 +67,14 @@ public class CameraController : MonoBehaviour
         }
         transform.Rotate(rotation);
 
+
+        if (!Mathf.Approximately(zoom, targetZoom))
+        {
+            var dir = transform.forward;
+            var dist = zoomSpeed * Mathf.SmoothDamp(zoom, targetZoom, ref zoomSmoothV, zoomSmoothTime);
+            transform.Translate(0, 0, dist, Space.Self);
+        
+        }
     }
 
     void OnMove(InputValue value)
@@ -75,6 +93,14 @@ public class CameraController : MonoBehaviour
         // rot.x = -lookInput.y;
         // rot.y = lookInput.x;
     }
+
+    void OnZoom(InputValue value)
+    {
+        float zoomInput = value.Get<float>();
+        Debug.Log(zoomInput);
+        targetZoom += zoomInput * zoomScale;
+    }
+    
 
     // void OnSelect(InputValue value)
     // {

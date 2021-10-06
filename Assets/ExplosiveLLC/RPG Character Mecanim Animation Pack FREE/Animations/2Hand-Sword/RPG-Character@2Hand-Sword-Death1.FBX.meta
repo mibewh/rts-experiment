@@ -794,7 +794,7 @@ ModelImporter:
         functionName: Die
         data: 
         objectReferenceParameter: {fileID: 11500000, guid: 93d0a57bf9c1b3441bca30e50439b47d, type: 3}
-        floatParameter: 0
+        floatParameter: 2
         intParameter: 0
         messageOptions: 0
       transformMask: []
