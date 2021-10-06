@@ -12,9 +12,11 @@ public class CameraController : MonoBehaviour
     public float panSmoothTime = 0.1f;
     public float rotationSpeed = 10f;
     public float spinSpeed = 20f;
-    public float zoomSpeed = 1f;
-    public float zoomScale = 1f;
+    
+    public float zoomDamp = 1f;
     public float zoomSmoothTime = 0.5f;
+    public float maxZoom = 12;
+    public float minZoom = -30;
     
     private Vector3 pan = Vector3.zero;
     private Vector3 targetPan = Vector3.zero;
@@ -71,9 +73,10 @@ public class CameraController : MonoBehaviour
         if (!Mathf.Approximately(zoom, targetZoom))
         {
             var dir = transform.forward;
-            var dist = zoomSpeed * Mathf.SmoothDamp(zoom, targetZoom, ref zoomSmoothV, zoomSmoothTime);
-            transform.Translate(0, 0, dist, Space.Self);
-        
+            var prevZoom = zoom;
+            zoom = Mathf.SmoothDamp(zoom, targetZoom, ref zoomSmoothV, zoomSmoothTime);
+            transform.position += (zoom - prevZoom) * dir;
+            Debug.Log(zoom);
         }
     }
 
@@ -98,7 +101,9 @@ public class CameraController : MonoBehaviour
     {
         float zoomInput = value.Get<float>();
         Debug.Log(zoomInput);
-        targetZoom += zoomInput * zoomScale;
+        targetZoom += zoomInput / zoomDamp;
+        targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
+
     }
     
 
