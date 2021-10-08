@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 
 public class CameraController : MonoBehaviour
 {
-    public float panSpeed = 1f;
+    public float panDamp = 1f;
     public float panSmoothTime = 0.1f;
     public float rotationSpeed = 10f;
     public float spinSpeed = 20f;
@@ -17,6 +17,8 @@ public class CameraController : MonoBehaviour
     public float zoomSmoothTime = 0.5f;
     public float maxZoom = 12;
     public float minZoom = -30;
+
+    public float rotSmoothTime = 0.1f;
     
     private Vector3 pan = Vector3.zero;
     private Vector3 targetPan = Vector3.zero;
@@ -28,9 +30,14 @@ public class CameraController : MonoBehaviour
     
 
     private bool rotating = false;
-    private float pitch;
-    private float yaw;
+    private float pitch = 0;
+    private float yaw = 0;
+    private float targetPitch = 0;
+    private float targetYaw = 0;
     private float spin;
+    private Vector3 rotation;
+    private Vector3 appliedRotation;
+    private Vector3 rotSmoothV;
 
     private Camera camera;
     private Unit selected = null;
@@ -44,22 +51,19 @@ public class CameraController : MonoBehaviour
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
-        pan = panSpeed * Vector3.SmoothDamp(pan, targetPan, ref panSmoothV, panSmoothTime);
+        pan = Vector3.SmoothDamp(pan, targetPan, ref panSmoothV, panSmoothTime, Mathf.Infinity, Time.deltaTime);
         
         transform.Translate(pan, Space.World);
 
         // always apply spin
-        Vector3 rotation = Time.deltaTime * spinSpeed * spin * Vector3.forward;
+        // Vector3 rotation = Time.deltaTime * spinSpeed * spin * Vector3.forward;
         
         if (rotating)
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-
-            rotation += Time.deltaTime * rotationSpeed * pitch * Vector3.right +
-                        Time.deltaTime * rotationSpeed * yaw * Vector3.up;
             // transform.Rotate(rot, Space.Self);
         }
         else
@@ -67,40 +71,49 @@ public class CameraController : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
-        transform.Rotate(rotation);
+
+        Vector3 targetEulers = new Vector3(targetPitch, targetYaw, 0);
+        if (Vector3.Distance(rotation, targetEulers) > 0.001f)
+        {
+            rotation = Vector3.SmoothDamp(rotation, targetEulers, ref rotSmoothV, rotSmoothTime);
+            transform.Rotate(rotation, Space.Self);
+            appliedRotation += rotation;
+        }
+        
 
 
         if (!Mathf.Approximately(zoom, targetZoom))
         {
             var dir = transform.forward;
             var prevZoom = zoom;
-            zoom = Mathf.SmoothDamp(zoom, targetZoom, ref zoomSmoothV, zoomSmoothTime);
+            zoom = Mathf.SmoothDamp(zoom, targetZoom, ref zoomSmoothV, zoomSmoothTime, Mathf.Infinity, Time.deltaTime);
             transform.position += (zoom - prevZoom) * dir;
-            Debug.Log(zoom);
         }
-    }
-
-    void OnMove(InputValue value)
-    {
-        Vector2 panInput = value.Get<Vector2>();
-        targetPan = new Vector3(panInput.x, 0, panInput.y);
-
     }
 
     void OnLook(InputValue value)
     {
-        Vector2 lookInput = value.Get<Vector2>();
-        pitch = -lookInput.y;
-        yaw = lookInput.x;
+        if (rotating)
+        {
+            Vector2 lookInput = value.Get<Vector2>();
+            targetPitch = -lookInput.y * rotationSpeed;
+            targetYaw = lookInput.x * rotationSpeed;
+        }
         // targetRot = Quaternion.AngleAxis(targetPitch, Vector3.up) * Quaternion.AngleAxis(targetYaw, Vector3.right);
         // rot.x = -lookInput.y;
         // rot.y = lookInput.x;
     }
 
+    void OnMove(InputValue value)
+    {
+        Vector2 panInput = value.Get<Vector2>() / panDamp;
+        targetPan = new Vector3(panInput.x, 0, panInput.y);
+
+    }
+
     void OnZoom(InputValue value)
     {
         float zoomInput = value.Get<float>();
-        Debug.Log(zoomInput);
         targetZoom += zoomInput / zoomDamp;
         targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
 
@@ -128,6 +141,8 @@ public class CameraController : MonoBehaviour
 
     void OnRotate(InputValue value)
     {
+        Debug.Log("OnRotate");
+        
         if (value.isPressed)
         {
             rotating = true;
@@ -135,6 +150,13 @@ public class CameraController : MonoBehaviour
         else
         {
             rotating = false;
+            
+            // Attempt at reseting camera to previous rotation (doesn't work)
+            // targetPitch = -appliedRotation.x;
+            // targetYaw = -appliedRotation.y;
+
+            appliedRotation = Vector3.zero;
+            Debug.Log("reset");
         }
     }
 

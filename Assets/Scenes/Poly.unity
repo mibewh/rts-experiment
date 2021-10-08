@@ -603,12 +603,16 @@ PrefabInstance:
       value: -20
       objectReference: {fileID: 0}
     - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
+      propertyPath: panDamp
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
       propertyPath: panSpeed
       value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
       propertyPath: zoomDamp
-      value: 15
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
       propertyPath: zoomScale
@@ -617,6 +621,18 @@ PrefabInstance:
     - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
       propertyPath: zoomSpeed
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
+      propertyPath: rotationDamp
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
+      propertyPath: panSmoothTime
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
+      propertyPath: rotationSpeed
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 844969757177906277, guid: e18d61da590d7ca4eb69a7483b3f5488, type: 3}
       propertyPath: zoomSmoothTime
