@@ -10,7 +10,6 @@ public class CameraController : MonoBehaviour
 {
     public float panDamp = 1f;
     public float panSmoothTime = 0.1f;
-    public float rotationSpeed = 10f;
     public float spinSpeed = 20f;
     
     public float zoomDamp = 1f;
@@ -18,7 +17,9 @@ public class CameraController : MonoBehaviour
     public float maxZoom = 12;
     public float minZoom = -30;
 
-    public float rotSmoothTime = 0.1f;
+    public float rotationDamp = 10f;
+    public float rotationSmoothTime = 0.1f;
+    public float rotationRestoreSpeed = 1f;
     
     private Vector3 pan = Vector3.zero;
     private Vector3 targetPan = Vector3.zero;
@@ -36,7 +37,7 @@ public class CameraController : MonoBehaviour
     private float targetYaw = 0;
     private float spin;
     private Vector3 rotation;
-    private Vector3 appliedRotation;
+    private Quaternion originalRotation;
     private Vector3 rotSmoothV;
 
     private Camera camera;
@@ -48,9 +49,9 @@ public class CameraController : MonoBehaviour
     void Start()
     {
         camera = GetComponent<Camera>();
+        originalRotation = transform.rotation;
     }
 
-    // Update is called once per frame
     void Update()
     {
         pan = Vector3.SmoothDamp(pan, targetPan, ref panSmoothV, panSmoothTime, Mathf.Infinity, Time.deltaTime);
@@ -72,12 +73,21 @@ public class CameraController : MonoBehaviour
             Cursor.visible = true;
         }
 
-        Vector3 targetEulers = new Vector3(targetPitch, targetYaw, 0);
-        if (Vector3.Distance(rotation, targetEulers) > 0.001f)
+        if (rotating)
         {
-            rotation = Vector3.SmoothDamp(rotation, targetEulers, ref rotSmoothV, rotSmoothTime);
-            transform.Rotate(rotation, Space.Self);
-            appliedRotation += rotation;
+            Vector3 targetEulers = new Vector3(targetPitch, targetYaw, 0);
+            if (Vector3.Distance(rotation, targetEulers) > 0.001f)
+            {
+                rotation = Vector3.SmoothDamp(rotation, targetEulers, ref rotSmoothV, rotationSmoothTime);
+                transform.Rotate(rotation, Space.Self);
+                float clampedX = Mathf.Clamp(transform.rotation.eulerAngles.x, 0, 90);
+                transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+            }
+        }
+        else
+        {
+            // restore to original rotation
+            transform.rotation = Quaternion.Lerp(transform.rotation, originalRotation, Time.deltaTime * rotationRestoreSpeed);
         }
         
 
@@ -91,13 +101,15 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    // Update is called once per frame
+
     void OnLook(InputValue value)
     {
         if (rotating)
         {
             Vector2 lookInput = value.Get<Vector2>();
-            targetPitch = -lookInput.y * rotationSpeed;
-            targetYaw = lookInput.x * rotationSpeed;
+            targetPitch = -lookInput.y / rotationDamp;
+            targetYaw = lookInput.x / rotationDamp;
         }
         // targetRot = Quaternion.AngleAxis(targetPitch, Vector3.up) * Quaternion.AngleAxis(targetYaw, Vector3.right);
         // rot.x = -lookInput.y;
@@ -152,10 +164,12 @@ public class CameraController : MonoBehaviour
             rotating = false;
             
             // Attempt at reseting camera to previous rotation (doesn't work)
-            // targetPitch = -appliedRotation.x;
-            // targetYaw = -appliedRotation.y;
-
-            appliedRotation = Vector3.zero;
+            targetPitch = 0;
+            targetYaw = 0;
+            
+            Debug.Log(targetPitch);
+            Debug.Log(targetYaw);
+            
             Debug.Log("reset");
         }
     }
